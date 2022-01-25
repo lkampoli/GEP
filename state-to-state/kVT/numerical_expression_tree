@@ -1,0 +1,23 @@
+graph {
+	1 [label=1.0]
+	2 [label="*"]
+	3 [label="*"]
+	4 [label=T]
+	5 [label=T]
+	6 [label="*"]
+	7 [label="*"]
+	8 [label=1.0]
+	9 [label=T]
+	10 [label=T]
+	0 [label="+"]
+	2 -- 3
+	2 -- 4
+	3 -- 5
+	3 -- 6
+	6 -- 7
+	6 -- 8
+	7 -- 9
+	7 -- 10
+	0 -- 1
+	0 -- 2
+}

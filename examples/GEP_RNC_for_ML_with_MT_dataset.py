@@ -67,7 +67,7 @@ print(os.listdir("./"))
 
 
 # read in the data to pandas
-PowerPlantData = pd.read_csv("../data/UCI_PowerPlant.csv")
+PowerPlantData = pd.read_csv("../data/MT/DB4T_h.csv")
 
 
 # ## Notes on the ML training data
@@ -89,7 +89,7 @@ PowerPlantData = pd.read_csv("../data/UCI_PowerPlant.csv")
 # In[22]:
 
 
-PowerPlantData.describe()
+print(PowerPlantData.describe())
 
 
 # ## Split my data into Train and Test chunks, 20/80
@@ -106,14 +106,14 @@ holdout = PowerPlantData[~msk]
 
 
 # check the number of records we'll validate our MSE with
-holdout.describe()
+print(holdout.describe())
 
 
 # In[25]:
 
 
 # check the number of records we'll train our algorithm with
-train.describe()
+print(train.describe())
 
 
 # In[26]:
@@ -125,21 +125,21 @@ train.describe()
 # NOTE: I'm only feeding in the TRAIN values to the algorithms. Later I will independely check
 # the MSE myself using a holdout test dataset
 
-AT = train.AT.values
-V  = train.V.values
-AP = train.AP.values
-RH = train.RH.values
+P     = train.P.values
+T     = train.T.values
+TvCO2 = train.TvCO2.values
+TvO2  = train.TvO2.values
+TvCO  = train.TvCO.values
+x_CO2 = train.x_CO2.values
+x_O2  = train.x_O2.values
+x_CO  = train.x_CO.values
+x_O   = train.x_O.values
+x_C   = train.x_C.values
+shear = train.shear.values
 
-Y = train.PE.values  # this is our target, now mapped to Y
+Y = shear
 
-print(AT)
-print(V)
-print(AP)
-print(RH)
-print(Y)
-
-
-# # Creating the primitives set
+# Creating the primitives set
 # The first step in GEP (or GP as well) is to specify the primitive set, which contains the elementary building blocks to formulate the model. For this problem, we have:
 # + function set: the standard arithmetic operators addition (+), subtraction (-), multiplication (*), and division (/).
 # + terminal set: only the single input 'x' and random numerical constants (RNC).
@@ -174,7 +174,7 @@ def protected_div(x1, x2):
 # In[28]:
 
 
-pset = gep.PrimitiveSet('Main', input_names=['AT','V','AP','RH'])
+pset = gep.PrimitiveSet('Main', input_names=['P','T','TvCO2','TvO2','TvCO','x_CO2','x_O2','x_CO','x_O','x_C'])
 
 
 # # Define the operators
@@ -222,7 +222,7 @@ creator.create("Individual", gep.Chromosome, fitness=creator.FitnessMin)
 h = 7            # head length
 n_genes = 2      # number of genes in a chromosome
 r = 10           # length of the RNC array
-enable_ls = True # whether to apply the linear scaling technique
+enable_ls = False # whether to apply the linear scaling technique
 
 
 # **NOTE** Above you define the gene structure which sets out the maximum complexity of the symbolic regression
@@ -257,10 +257,8 @@ def evaluate(individual):
     func = toolbox.compile(individual)
     
     # below call the individual as a function over the inputs
-    
-    # Yp = np.array(list(map(func, X)))
-    Yp = np.array(list(map(func, AT, V, AP, RH))) 
-    
+    Yp = np.array(list(map(func,P,T,TvCO2,TvO2,TvCO,x_CO2,x_O2,x_CO,x_O,x_C)))
+
     # return the MSE as we are evaluating on it anyway - then the stats are more fun to watch...
     return np.mean((Y - Yp) ** 2),
 
@@ -281,7 +279,7 @@ def evaluate_ls(individual):
     and then evaluate its fitness: MSE (mean squared error)
     """
     func = toolbox.compile(individual)
-    Yp = np.array(list(map(func, AT, V, AP, RH)))
+    Yp = np.array(list(map(func,P,T,TvCO2,TvO2,TvCO,x_CO2,x_O2,x_CO,x_O,x_C)))
     
     # special cases which cannot be handled by np.linalg.lstsq: (1) individual has only a terminal 
     #  (2) individual returns the same value for all test cases, like 'x - x + 10'. np.linalg.lstsq will fail in such cases.
@@ -413,14 +411,11 @@ if enable_ls:
 key= '''
 Given training examples of
 
-    AT = Atmospheric Temperature (C)
-    V = Exhaust Vacuum Speed
-    AP = Atmospheric Pressure
-    RH = Relative Humidity
+    P,T,TvCO2,TvO2,TvCO,x_CO2,x_O2,x_CO,x_O,x_C
 
 we trained a computer using Genetic Algorithms to predict the 
 
-    PE = Power Output
+    shear
 
 Our symbolic regression process found the following equation offers our best prediction:
 
@@ -455,7 +450,7 @@ symplified_best
 
 # we want to use symbol labels instead of words in the tree graph
 rename_labels = {'add': '+', 'sub': '-', 'mul': '*', 'protected_div': '/'}  
-gep.export_expression_tree(best_ind, rename_labels, 'data/numerical_expression_tree.png')
+gep.export_expression_tree(best_ind, rename_labels, 'numerical_expression_tree.png')
 
 
 # As we can see from the above simplified expression, the *truth model* has been successfully found. Due to the existence of Gaussian noise, the minimum mean absolute error （MAE) is still not zero even the best individual represents the true model.
@@ -473,7 +468,7 @@ gep.export_expression_tree(best_ind, rename_labels, 'data/numerical_expression_t
 
 # show the above image here for convenience
 from IPython.display import Image
-Image(filename='data/numerical_expression_tree.png')
+Image(filename='numerical_expression_tree.png')
 
 
 # # DoubleCheck our final Test Statistics
@@ -485,7 +480,7 @@ Image(filename='data/numerical_expression_tree.png')
 # In[47]:
 
 
-def CalculateBestModelOutput(AT, V, AP, RH, model):
+def CalculateBestModelOutput(P,T,TvCO2,TvO2,TvCO,x_CO2,x_O2,x_CO,x_O,x_C, model):
     # pass in a string view of the "model" as str(symplified_best)
     # this string view of the equation may reference any of the other inputs, AT, V, AP, RH we registered
     # we then use eval of this string to calculate the answer for these inputs
@@ -509,7 +504,7 @@ holdout.describe()
 # In[49]:
 
 
-predPE = CalculateBestModelOutput(holdout.AT, holdout.V, holdout.AP, holdout.RH, str(symplified_best))
+predPE = CalculateBestModelOutput(holdout.P, holdout.T, holdout.TvCO2, holdout.TvO2, holdout.TvCO, holdout.x_CO2, holdout.x_O2, holdout.x_CO, holdout.x_O, holdout.x_C, str(symplified_best))
 
 
 # In[50]:
