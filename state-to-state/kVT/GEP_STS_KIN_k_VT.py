@@ -343,10 +343,11 @@ else:
 # 
 # In the following code, the selection operator is ``tools.selTournament`` 
 # provided by DEAP, while all other operators are specially designed for GEP in *geppy*.
+toolbox.register('select', tools.selTournament, tournsize=2)
+#toolbox.register('select', tools.selRoulette)
 
-toolbox.register('select', tools.selTournament, tournsize=3)
 # 1. general operators
-toolbox.register('mut_uniform', gep.mutate_uniform, pset=pset, ind_pb=0.05, pb=1)
+toolbox.register('mut_uniform', gep.mutate_uniform, pset=pset, ind_pb=0.001, pb=0.01)
 toolbox.register('mut_invert', gep.invert, pb=0.1)
 toolbox.register('mut_is_transpose', gep.is_transpose, pb=0.1)
 toolbox.register('mut_ris_transpose', gep.ris_transpose, pb=0.1)
@@ -354,13 +355,15 @@ toolbox.register('mut_gene_transpose', gep.gene_transpose, pb=0.1)
 toolbox.register('cx_1p', gep.crossover_one_point, pb=0.3)
 toolbox.register('cx_2p', gep.crossover_two_point, pb=0.2)
 toolbox.register('cx_gene', gep.crossover_gene, pb=0.1)
+
 # 2. Dc-specific operators
 toolbox.register('mut_dc', gep.mutate_uniform_dc, ind_pb=0.05, pb=1)
 toolbox.register('mut_invert_dc', gep.invert_dc, pb=0.1)
 toolbox.register('mut_transpose_dc', gep.transpose_dc, pb=0.1)
+
 # for some uniform mutations, we can also assign the ind_pb a string to indicate our expected number of point mutations in an individual
-toolbox.register('mut_rnc_array_dc', gep.mutate_rnc_array_dc, rnc_gen=toolbox.rnc_gen, ind_pb='0.5p')
-toolbox.pbs['mut_rnc_array_dc'] = 1  # we can also give the probability via the pbs property
+toolbox.register('mut_rnc_array_dc', gep.mutate_rnc_array_dc, rnc_gen=toolbox.rnc_gen, ind_pb='0.2p')
+toolbox.pbs['mut_rnc_array_dc'] = 0.2  # we can also give the probability via the pbs property
 
 # Statistics to be inspected
 # We often need to monitor of progress of an evolutionary program. 
@@ -368,7 +371,6 @@ toolbox.pbs['mut_rnc_array_dc'] = 1  # we can also give the probability via the 
 # Details are presented in [Computing statistics](http://deap.readthedocs.io/en/master/tutorials/basic/part3.html). 
 # In the following, we are intereted in the average/standard 
 # deviation/min/max of all the individuals' fitness in each generation.
-
 stats = tools.Statistics(key=lambda ind: ind.fitness.values[0])
 stats.register("avg", np.mean)
 stats.register("std", np.std)
@@ -388,7 +390,7 @@ Max_fit = np.zeros(N_eval)
 # destructive and may destroy the best individual we have evolved.
 
 # size of population and number of generations
-n_pop  = 10
+n_pop  = 40
 n_gen  = 40
 champs = 3
 
