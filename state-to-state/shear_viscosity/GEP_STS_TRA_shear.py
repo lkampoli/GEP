@@ -4,6 +4,7 @@
 import os
 import geppy as gep
 from deap import creator, base, tools
+
 import numpy as np
 import pandas as pd
 import random
@@ -25,7 +26,7 @@ np.random.seed(s)
 print(os.listdir("./"))
 
 # read in the data to pandas
-data = np.loadtxt("./data/STS/shear_viscosity.txt")
+data = np.loadtxt("../../data/STS/shear_viscosity.txt")
 print(data.shape)
 
 from sklearn.preprocessing import StandardScaler
@@ -244,8 +245,9 @@ N_eval = 1
 # **NOTE** Above you define the gene structure which sets out the maximum complexity of the symbolic regression
 
 toolbox = gep.Toolbox()
-toolbox.register('rnc_gen', random.randint, a=-10, b=10) # each RNC is random integer within [0, 10]
+#toolbox.register('rnc_gen', random.randint, a=-5, b=5) # each RNC is random integer within [0, 10]
 #toolbox.register('rnc_gen', random.choice, np.arange(0.1,10.0,0.1))
+toolbox.register('rnc_gen', random.uniform, a=-0.01, b=1)
 toolbox.register('gene_gen', gep.GeneDc, pset=pset, head_length=h, rnc_gen=toolbox.rnc_gen, rnc_array_length=r)
 toolbox.register('individual', creator.Individual, gene_gen=toolbox.gene_gen, n_genes=n_genes, linker=operator.add)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -324,22 +326,39 @@ else:
 # provided by DEAP, while all other operators are specially designed for GEP in *geppy*.
 
 toolbox.register('select', tools.selTournament, tournsize=3)
+
 # 1. general operators
-toolbox.register('mut_uniform', gep.mutate_uniform, pset=pset, ind_pb=0.05, pb=1)
-toolbox.register('mut_invert', gep.invert, pb=0.1)
-toolbox.register('mut_is_transpose', gep.is_transpose, pb=0.1)
-toolbox.register('mut_ris_transpose', gep.ris_transpose, pb=0.1)
-toolbox.register('mut_gene_transpose', gep.gene_transpose, pb=0.1)
-toolbox.register('cx_1p', gep.crossover_one_point, pb=0.3)
-toolbox.register('cx_2p', gep.crossover_two_point, pb=0.2)
-toolbox.register('cx_gene', gep.crossover_gene, pb=0.1)
+#toolbox.register('mut_uniform', gep.mutate_uniform, pset=pset, ind_pb=0.05, pb=1)
+#toolbox.register('mut_invert', gep.invert, pb=0.1)
+#toolbox.register('mut_is_transpose', gep.is_transpose, pb=0.1)
+#toolbox.register('mut_ris_transpose', gep.ris_transpose, pb=0.1)
+#toolbox.register('mut_gene_transpose', gep.gene_transpose, pb=0.1)
+#toolbox.register('cx_1p', gep.crossover_one_point, pb=0.3)
+#toolbox.register('cx_2p', gep.crossover_two_point, pb=0.2)
+#toolbox.register('cx_gene', gep.crossover_gene, pb=0.1)
+
+toolbox.register('mut_uniform', gep.mutate_uniform, pset=pset, ind_pb='4p', pb=0.1)
+#toolbox.register('mut_invert', gep.invert, pb=0.1)
+toolbox.register('mut_is_transpose', gep.is_transpose, pb=0.025)
+toolbox.register('mut_ris_transpose', gep.ris_transpose, pb=0.025)
+toolbox.register('mut_gene_transpose', gep.gene_transpose, pb=0.025)
+toolbox.register('cx_1p', gep.crossover_one_point, pb=0.05)
+toolbox.register('cx_2p', gep.crossover_two_point, pb=0.05)
+toolbox.register('cx_gene', gep.crossover_gene, pb=0.025)
+
+toolbox.register('mut_ephemeral', gep.mutate_uniform_ephemeral, ind_pb='1p')  # 1p: expected one point mutation in an individual
+toolbox.pbs['mut_ephemeral'] = 1  # we can also give the probability via the pbs property
+
 # 2. Dc-specific operators
-toolbox.register('mut_dc', gep.mutate_uniform_dc, ind_pb=0.05, pb=1)
-toolbox.register('mut_invert_dc', gep.invert_dc, pb=0.1)
-toolbox.register('mut_transpose_dc', gep.transpose_dc, pb=0.1)
+#toolbox.register('mut_dc', gep.mutate_uniform_dc, ind_pb=0.05, pb=1)
+#toolbox.register('mut_dc', gep.mutate_uniform_dc, ind_pb='4p', pb=0.8)
+#toolbox.register('mut_invert_dc', gep.invert_dc, pb=0.1)
+#toolbox.register('mut_transpose_dc', gep.transpose_dc, pb=0.1)
+
 # for some uniform mutations, we can also assign the ind_pb a string to indicate our expected number of point mutations in an individual
-toolbox.register('mut_rnc_array_dc', gep.mutate_rnc_array_dc, rnc_gen=toolbox.rnc_gen, ind_pb='0.5p')
-toolbox.pbs['mut_rnc_array_dc'] = 1  # we can also give the probability via the pbs property
+toolbox.register('mut_rnc_array_dc', gep.mutate_rnc_array_dc, rnc_gen=toolbox.rnc_gen, ind_pb='4p', pb=0.1)
+#toolbox.register('mut_rnc_array_dc', gep.mutate_rnc_array_dc, rnc_gen=toolbox.rnc_gen, ind_pb='0.5p')
+#toolbox.pbs['mut_rnc_array_dc'] = 1  # we can also give the probability via the pbs property
 
 # Statistics to be inspected
 # We often need to monitor of progress of an evolutionary program. 
@@ -347,7 +366,6 @@ toolbox.pbs['mut_rnc_array_dc'] = 1  # we can also give the probability via the 
 # Details are presented in [Computing statistics](http://deap.readthedocs.io/en/master/tutorials/basic/part3.html). 
 # In the following, we are intereted in the average/standard 
 # deviation/min/max of all the individuals' fitness in each generation.
-
 stats = tools.Statistics(key=lambda ind: ind.fitness.values[0])
 stats.register("avg", np.mean)
 stats.register("std", np.std)
@@ -367,8 +385,8 @@ Max_fit = np.zeros(N_eval)
 # destructive and may destroy the best individual we have evolved.
 
 # size of population and number of generations
-n_pop  = 100
-n_gen  = 100
+n_pop  = 30
+n_gen  = 30
 champs = 3
 
 pop = toolbox.population(n=n_pop)
@@ -424,16 +442,6 @@ for i in range(N_eval):
     print("Hof_save:",Hof_save[i][0])
     temp[i] = Max_evolution[i][-1]
 
-
-# display
-#shear_test = np.linspace(np.min(shear),np.max(shear),num=10000)
-#plt.figure()
-#plt.semilogx(df.Pi1,10*np.log10(df.PiF),color='b',marker='.',linestyle=' ')
-#for ii in np.unique(df.Pi2):
-#    plt.semilogx(Pi1_test,10*np.log10(best_func(Pi1_test,ii)))
-#plt.show()
-
-
 if enable_ls:
     symplified_best = best_ind.a * symplified_best + best_ind.b
 
@@ -471,7 +479,7 @@ for i in range(champs):
     print(hof[i])
 
 # we want to use symbol labels instead of words in the tree graph
-rename_labels = {'add': '+', 'sub': '-', 'mul': '*', 'protected_div': '/'}  
+rename_labels = {'add':'+','sub':'-','mul':'*','protected_div':'/','protected_exp':'exp','protected_log':'log','sin':'sin','cos':'cos','tan':'tan'}
 gep.export_expression_tree(best_ind, rename_labels, 'numerical_expression_tree.png')
 
 # As we can see from the above simplified expression, the *truth model* has been successfully found. 
@@ -504,58 +512,58 @@ def CalculateBestModelOutput(P,T,x_1,x_2,x_3,x_4,x_5,x_6,x_7,x_8,x_9,x_10,x_11,x
 #  2.39245892691119e-5 + 7.81268662658234e-9*(x_18*(T*(x_1 + x_40) + T + x_27) + sin(sin(x_8)))/x_18 
 #  2.81267339167932e-5 + 8.63443922749263e-9*(T*(x_13 + x_46) - x_32*(x_13 + x_46) + (x_13 + x_46)*tan(x_2 + cos(tan(x_42)) - 6) + tan(x_6))/(x_13 + x_46) 
 
-P    = holdout[:,0]
-T    = holdout[:,1]
-x_1  = holdout[:,2]
-x_2  = holdout[:,3] 
-x_3  = holdout[:,4] 
-x_4  = holdout[:,5]
-x_5  = holdout[:,6]
-x_6  = holdout[:,7]
-x_7  = holdout[:,8] 
-x_8  = holdout[:,9] 
-x_9  = holdout[:,10] 
-x_10 = holdout[:,11] 
-x_11 = holdout[:,12]
-x_12 = holdout[:,13]
-x_13 = holdout[:,14] 
-x_14 = holdout[:,15] 
-x_15 = holdout[:,16] 
-x_16 = holdout[:,17]
-x_17 = holdout[:,18] 
-x_18 = holdout[:,19] 
-x_19 = holdout[:,20] 
-x_20 = holdout[:,21] 
-x_21 = holdout[:,22] 
-x_22 = holdout[:,23] 
-x_23 = holdout[:,24] 
-x_24 = holdout[:,25] 
-x_25 = holdout[:,26] 
-x_26 = holdout[:,27] 
-x_27 = holdout[:,28]
-x_28 = holdout[:,29] 
-x_29 = holdout[:,30] 
-x_30 = holdout[:,31] 
-x_31 = holdout[:,32] 
-x_32 = holdout[:,33] 
-x_33 = holdout[:,34] 
-x_34 = holdout[:,35] 
-x_35 = holdout[:,36]
-x_36 = holdout[:,37] 
-x_37 = holdout[:,38] 
-x_38 = holdout[:,39] 
-x_39 = holdout[:,40]
-x_40 = holdout[:,41] 
-x_41 = holdout[:,42] 
-x_42 = holdout[:,43] 
-x_43 = holdout[:,44] 
-x_44 = holdout[:,45] 
-x_45 = holdout[:,46] 
-x_46 = holdout[:,47] 
-x_47 = holdout[:,48]
-x_48 = holdout[:,49]
-x_at = holdout[:,50]
-shear= holdout[:,51]
+P    = holdout[:,0].reshape(-1,1) 
+T    = holdout[:,1].reshape(-1,1)
+x_1  = holdout[:,2].reshape(-1,1)
+x_2  = holdout[:,3].reshape(-1,1) 
+x_3  = holdout[:,4].reshape(-1,1) 
+x_4  = holdout[:,5].reshape(-1,1)
+x_5  = holdout[:,6].reshape(-1,1)
+x_6  = holdout[:,7].reshape(-1,1)
+x_7  = holdout[:,8].reshape(-1,1) 
+x_8  = holdout[:,9].reshape(-1,1) 
+x_9  = holdout[:,10].reshape(-1,1) 
+x_10 = holdout[:,11].reshape(-1,1) 
+x_11 = holdout[:,12].reshape(-1,1)
+x_12 = holdout[:,13].reshape(-1,1)
+x_13 = holdout[:,14].reshape(-1,1) 
+x_14 = holdout[:,15].reshape(-1,1) 
+x_15 = holdout[:,16].reshape(-1,1) 
+x_16 = holdout[:,17].reshape(-1,1)
+x_17 = holdout[:,18].reshape(-1,1) 
+x_18 = holdout[:,19].reshape(-1,1) 
+x_19 = holdout[:,20].reshape(-1,1) 
+x_20 = holdout[:,21].reshape(-1,1) 
+x_21 = holdout[:,22].reshape(-1,1) 
+x_22 = holdout[:,23].reshape(-1,1) 
+x_23 = holdout[:,24].reshape(-1,1) 
+x_24 = holdout[:,25].reshape(-1,1) 
+x_25 = holdout[:,26].reshape(-1,1) 
+x_26 = holdout[:,27].reshape(-1,1) 
+x_27 = holdout[:,28].reshape(-1,1)
+x_28 = holdout[:,29].reshape(-1,1) 
+x_29 = holdout[:,30].reshape(-1,1) 
+x_30 = holdout[:,31].reshape(-1,1) 
+x_31 = holdout[:,32].reshape(-1,1) 
+x_32 = holdout[:,33].reshape(-1,1) 
+x_33 = holdout[:,34].reshape(-1,1) 
+x_34 = holdout[:,35].reshape(-1,1) 
+x_35 = holdout[:,36].reshape(-1,1)
+x_36 = holdout[:,37].reshape(-1,1) 
+x_37 = holdout[:,38].reshape(-1,1) 
+x_38 = holdout[:,39].reshape(-1,1) 
+x_39 = holdout[:,40].reshape(-1,1)
+x_40 = holdout[:,41].reshape(-1,1) 
+x_41 = holdout[:,42].reshape(-1,1) 
+x_42 = holdout[:,43].reshape(-1,1) 
+x_43 = holdout[:,44].reshape(-1,1) 
+x_44 = holdout[:,45].reshape(-1,1) 
+x_45 = holdout[:,46].reshape(-1,1) 
+x_46 = holdout[:,47].reshape(-1,1) 
+x_47 = holdout[:,48].reshape(-1,1)
+x_48 = holdout[:,49].reshape(-1,1)
+x_at = holdout[:,50].reshape(-1,1)
+shear= holdout[:,51].reshape(-1,1)
 
 pred_shear = CalculateBestModelOutput(P,T,x_1,x_2,x_3,x_4,x_5,x_6,x_7,x_8,x_9,x_10,x_11,x_12,x_13,x_14,x_15,x_16,x_17,x_18,x_19,x_20,x_21,x_22,x_23,x_24,x_25,x_26,x_27,x_28,x_29,x_30,x_31,x_32,x_33,x_34,x_35,x_36,x_37,x_38,x_39,x_40,x_41,x_42,x_43,x_44,x_45,x_46,x_47,x_48,x_at,str(symplified_best))
 
@@ -569,12 +577,12 @@ print("R2 score : %.2f" % r2_score(shear, pred_shear))
 
 # Let's eyeball predicted vs actual data
 from matplotlib import pyplot
-pyplot.rcParams['figure.figsize'] = [20, 5]
-plotlen=200
-pyplot.plot(pred_shear) # predictions are in blue
-pyplot.plot(shear)      # actual values are in orange
-pyplot.savefig("shear.png", dpi=150, crop='true')
-pyplot.show()
+#pyplot.rcParams['figure.figsize'] = [20, 5]
+#plotlen=200
+#pyplot.plot(pred_shear) # predictions are in blue
+#pyplot.plot(shear)      # actual values are in orange
+#pyplot.savefig("shear.png", dpi=150, crop='true')
+#pyplot.show()
 
 import matplotlib.pyplot as plt
 # shear viscosity vs temperature

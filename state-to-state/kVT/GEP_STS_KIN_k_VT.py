@@ -27,45 +27,73 @@ print(os.listdir("../../data/k_ci/processes_VT/"))
 # read in the data to pandas
 #data = pd.read_csv("../data/k_ci/processes_VT/VT_RATES-N2-N2-vt_down_T.csv")
 
-#T    = np.loadtxt("../data/k_ci/processes_VT/Temperatures.csv")
-#data = np.loadtxt("../data/k_ci/processes_VT/VT_RATES-N2-N2-vt_down.csv")
-data = np.loadtxt("../../data/k_ci/processes_VT/VT_RATES-N2-N2-vt_down_T.txt")
+from numpy import genfromtxt
+T = genfromtxt("../../data/k_ci/processes_VT/Temperatures.csv", delimiter=',')
+k = genfromtxt("../../data/k_ci/processes_VT/VT_RATES-N2-N2-vt_down.csv", delimiter=',')
+#k = genfromtxt("../../data/k_ci/processes_VT/VT_RATES-NO-NO-vt_down.csv", delimiter=',')
+#k = genfromtxt("../../data/k_ci/processes_VT/VT_RATES-O2-O_-vt_up__.csv", delimiter=',')
+
+print("T = ",T.shape)
+print("k = ",k.shape)
+
+#data = np.hstack((T,x))
+#data = np.concatenate((T, x), axis=None)
+#data = np.loadtxt("../../data/k_ci/processes_VT/VT_RATES-N2-N2-vt_up_T.txt")
 
 #print(data.describe())
 
-#from sklearn.preprocessing import StandardScaler
-#from sklearn.model_selection import train_test_split, GridSearchCV, KFold, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
-#x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.75, test_size=0.25, random_state=69)
+#x_train, x_test, y_train, y_test = train_test_split(T, k, train_size=0.75, test_size=0.25, random_state=666)
 #
 #sc_x = StandardScaler()
 #sc_y = StandardScaler()
 #
 ## fit scaler
-#sc_x.fit(x_train)
+#sc_x.fit(x_train.reshape(-1,1))
 #
 ## transform training dataset
-#x_train = sc_x.transform(x_train)
+#x_train = sc_x.transform(x_train.reshape(-1,1))
 #
 ## transform test dataset
-#x_test = sc_x.transform(x_test)
+#x_test = sc_x.transform(x_test.reshape(-1,1))
 #
 ## fit scaler on training dataset
 #sc_y.fit(y_train.reshape(-1,1))
 #
 ## transform training dataset
-#y_train = sc_y.transform(y_train)
+#y_train = sc_y.transform(y_train.reshape(-1,1))
 #
 ## transform test dataset
-#y_test = sc_y.transform(y_test)
+#y_test = sc_y.transform(y_test.reshape(-1,1))
+#
+#trainT   = x_train
+#holdoutT = x_test
+#
+#trainK   = y_train
+#holdoutK = y_test
 
 # Split my data into Train and Test chunks, 20/80
-msk     = np.random.rand(len(data)) < 0.8
-train   = data[msk]
-holdout = data[~msk]
+msk     = np.random.rand(len(T)) < 0.8
+#msk     = np.random.rand(len(data)) < 0.8
+#train   = data[msk]
+#holdout = data[~msk]
 
-T = train[:,0:1].reshape(-1,1)
-k = train[:,1:2].reshape(-1,1)
+trainT   = T[msk]
+holdoutT = T[~msk]
+
+trainK   = k[msk]
+holdoutK = k[~msk]
+
+T = trainT
+k = trainK[:,0:1] # consider only the 1st rate coeff. ... how to do multi-target regression with GEP?
+
+print(T.shape)
+print(k.shape)
+
+#T = train[:,0:1].reshape(-1,1)
+#k = train[:,1:2].reshape(-1,1)
 
 # check the number of records we'll validate our MSE with
 #print(holdout.describe())
@@ -75,54 +103,6 @@ k = train[:,1:2].reshape(-1,1)
 
 # NOTE: I'm only feeding in the TRAIN values to the algorithms. 
 # Later I will independently check the MSE myself using a holdout test dataset
-
-#T    = train.T.values
-#k_1  = train.k_1.values
-#k_2  = train.k_2.values  
-#k_3  = train.k_3.values 
-#k_4  = train.k_4.values 
-#k_5  = train.k_5.values 
-#k_6  = train.k_6.values 
-#k_7  = train.k_7.values 
-#k_8  = train.k_8.values 
-#k_9  = train.k_9.values 
-#k_10 = train.k_10.values 
-#k_11 = train.k_11.values
-#k_12 = train.k_12.values
-#k_13 = train.k_13.values
-#k_14 = train.k_14.values
-#k_15 = train.k_15.values
-#k_16 = train.k_16.values
-#k_17 = train.k_17.values
-#k_18 = train.k_18.values
-#k_19 = train.k_19.values
-#k_20 = train.k_20.values
-#k_21 = train.k_21.values
-#k_22 = train.k_22.values
-#k_23 = train.k_23.values
-#k_24 = train.k_24.values
-#k_25 = train.k_25.values
-#k_26 = train.k_26.values
-#k_27 = train.k_27.values
-#k_28 = train.k_28.values
-#k_29 = train.k_29.values
-#k_30 = train.k_30.values
-#k_31 = train.k_31.values
-#k_32 = train.k_32.values
-#k_33 = train.k_33.values
-#k_34 = train.k_34.values
-#k_35 = train.k_35.values
-#k_36 = train.k_36.values
-#k_37 = train.k_37.values
-#k_38 = train.k_38.values
-#k_39 = train.k_39.values
-#k_40 = train.k_40.values
-#k_41 = train.k_41.values
-#k_42 = train.k_42.values
-#k_43 = train.k_43.values
-#k_44 = train.k_44.values
-#k_45 = train.k_45.values
-#k_46 = train.k_46.values
 
 Y = k # this is our target, now mapped to Y
 
@@ -236,8 +216,9 @@ pset.add_function(math.tan, 1)
 pset.add_rnc_terminal()
 #pset.add_pow_terminal('T') #attention: Must the same as input in primitive set
 #pset.add_pow_terminal('Y')
-
-pset.add_constant_terminal(1.0)
+#pset.add_ephemeral_terminal(name='enc', gen=lambda: random.randint(-10, 10)) # each ENC is a random integer within [-10, 10]
+#pset.add_ephemeral_terminal(name='enc', gen=lambda: 1)
+#pset.add_constant_terminal(1.0)
 
 # Create the individual and population
 # Our objective is to **minimize** the MSE (mean squared error) for 
@@ -265,8 +246,9 @@ N_eval = 1
 # **NOTE** Above you define the gene structure which sets out the maximum complexity of the symbolic regression
 
 toolbox = gep.Toolbox()
-toolbox.register('rnc_gen', random.randint, a=-5, b=5) # each RNC is random integer within [0, 10]
+#toolbox.register('rnc_gen', random.randint, a=-5, b=5) # each RNC is random integer within [0, 10]
 #toolbox.register('rnc_gen', random.choice, np.arange(0.1,10.0,0.1))
+toolbox.register('rnc_gen', random.uniform, a=-0.01, b=1)
 toolbox.register('gene_gen', gep.GeneDc, pset=pset, head_length=h, rnc_gen=toolbox.rnc_gen, rnc_array_length=r)
 toolbox.register('individual', creator.Individual, gene_gen=toolbox.gene_gen, n_genes=n_genes, linker=operator.add)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -334,6 +316,10 @@ if enable_ls:
 else:
     toolbox.register('evaluate', evaluate)
 
+# size of population and number of generations
+n_pop  = 60
+n_gen  = 30
+champs = 3
 
 # Register genetic operators
 # Compared with GP and other genetic algorithms, GEP has its own set 
@@ -343,27 +329,42 @@ else:
 # 
 # In the following code, the selection operator is ``tools.selTournament`` 
 # provided by DEAP, while all other operators are specially designed for GEP in *geppy*.
-toolbox.register('select', tools.selTournament, tournsize=2)
+toolbox.register('select', tools.selTournament, tournsize=3)
+#toolbox.register('select', tools.selTournament, k=round((2.0/3.0)*n_pop)+1, tournsize=2)
 #toolbox.register('select', tools.selRoulette)
 
 # 1. general operators
-toolbox.register('mut_uniform', gep.mutate_uniform, pset=pset, ind_pb=0.001, pb=0.01)
-toolbox.register('mut_invert', gep.invert, pb=0.1)
-toolbox.register('mut_is_transpose', gep.is_transpose, pb=0.1)
-toolbox.register('mut_ris_transpose', gep.ris_transpose, pb=0.1)
-toolbox.register('mut_gene_transpose', gep.gene_transpose, pb=0.1)
-toolbox.register('cx_1p', gep.crossover_one_point, pb=0.3)
-toolbox.register('cx_2p', gep.crossover_two_point, pb=0.2)
-toolbox.register('cx_gene', gep.crossover_gene, pb=0.1)
+#toolbox.register('mut_uniform', gep.mutate_uniform, pset=pset, ind_pb=0.05, pb=1)
+#toolbox.register('mut_invert', gep.invert, pb=0.1)
+#toolbox.register('mut_is_transpose', gep.is_transpose, pb=0.1)
+#toolbox.register('mut_ris_transpose', gep.ris_transpose, pb=0.1)
+#toolbox.register('mut_gene_transpose', gep.gene_transpose, pb=0.1)
+#toolbox.register('cx_1p', gep.crossover_one_point, pb=0.3)
+#toolbox.register('cx_2p', gep.crossover_two_point, pb=0.2)
+#toolbox.register('cx_gene', gep.crossover_gene, pb=0.1)
+
+toolbox.register('mut_uniform', gep.mutate_uniform, pset=pset, ind_pb='4p', pb=0.1)
+#toolbox.register('mut_invert', gep.invert, pb=0.1)
+toolbox.register('mut_is_transpose', gep.is_transpose, pb=0.025)
+toolbox.register('mut_ris_transpose', gep.ris_transpose, pb=0.025)
+toolbox.register('mut_gene_transpose', gep.gene_transpose, pb=0.025)
+toolbox.register('cx_1p', gep.crossover_one_point, pb=0.05)
+toolbox.register('cx_2p', gep.crossover_two_point, pb=0.05)
+toolbox.register('cx_gene', gep.crossover_gene, pb=0.025)
+
+toolbox.register('mut_ephemeral', gep.mutate_uniform_ephemeral, ind_pb='1p')  # 1p: expected one point mutation in an individual
+toolbox.pbs['mut_ephemeral'] = 1  # we can also give the probability via the pbs property
 
 # 2. Dc-specific operators
-toolbox.register('mut_dc', gep.mutate_uniform_dc, ind_pb=0.05, pb=1)
-toolbox.register('mut_invert_dc', gep.invert_dc, pb=0.1)
-toolbox.register('mut_transpose_dc', gep.transpose_dc, pb=0.1)
+#toolbox.register('mut_dc', gep.mutate_uniform_dc, ind_pb=0.05, pb=1)
+#toolbox.register('mut_dc', gep.mutate_uniform_dc, ind_pb='4p', pb=0.8)
+#toolbox.register('mut_invert_dc', gep.invert_dc, pb=0.1)
+#toolbox.register('mut_transpose_dc', gep.transpose_dc, pb=0.1)
 
 # for some uniform mutations, we can also assign the ind_pb a string to indicate our expected number of point mutations in an individual
-toolbox.register('mut_rnc_array_dc', gep.mutate_rnc_array_dc, rnc_gen=toolbox.rnc_gen, ind_pb='0.2p')
-toolbox.pbs['mut_rnc_array_dc'] = 0.2  # we can also give the probability via the pbs property
+toolbox.register('mut_rnc_array_dc', gep.mutate_rnc_array_dc, rnc_gen=toolbox.rnc_gen, ind_pb='4p', pb=0.1)
+#toolbox.register('mut_rnc_array_dc', gep.mutate_rnc_array_dc, rnc_gen=toolbox.rnc_gen, ind_pb='0.5p')
+#toolbox.pbs['mut_rnc_array_dc'] = 1  # we can also give the probability via the pbs property
 
 # Statistics to be inspected
 # We often need to monitor of progress of an evolutionary program. 
@@ -388,11 +389,6 @@ Max_fit = np.zeros(N_eval)
 # be noted that in GEP [*elitism*](https://en.wikipedia.org/wiki/Genetic_algorithm#Elitism) 
 # is highly recommended because some genetic operators in GEP are 
 # destructive and may destroy the best individual we have evolved.
-
-# size of population and number of generations
-n_pop  = 40
-n_gen  = 40
-champs = 3
 
 pop = toolbox.population(n=n_pop)
 hof = tools.HallOfFame(champs) # only record the best three individuals ever found in all generations
@@ -459,7 +455,7 @@ key= '''
 #
 #we trained a computer using Genetic Algorithms to predict the 
 #
-#    shear = 
+#    k = 
 #
 #Our symbolic regression process found the following equation offers our best prediction:
 #
@@ -484,7 +480,7 @@ for i in range(champs):
     print(hof[i])
 
 # we want to use symbol labels instead of words in the tree graph
-rename_labels = {'add': '+', 'sub': '-', 'mul': '*', 'protected_div': '/', 'protected_exp': 'exp', 'protected_log': 'log'}  
+rename_labels = {'add':'+','sub':'-','mul':'*','protected_div':'/','protected_exp':'exp','protected_log':'log','sin':'sin','cos':'cos','tan':'tan'}  
 gep.export_expression_tree(best_ind, rename_labels, 'numerical_expression_tree.png')
 
 # As we can see from the above simplified expression, the *truth model* has been successfully found. 
@@ -515,7 +511,10 @@ def CalculateBestModelOutput(T, model):
 
 pred_k = CalculateBestModelOutput(T,str(symplified_best))
 pred_k = np.array(pred_k)
-pred_k = pred_k[0,:,:]
+print("pred_k.shape=",pred_k.shape)
+#pred_k = pred_k[0,:,:]
+pred_k = np.transpose(pred_k)
+print("pred_k.shape=",pred_k.shape)
 
 print("pred_k=",pred_k)
 print("pred_k.shape=",pred_k.shape)
@@ -524,9 +523,22 @@ print("pred_k=",type(pred_k))
 print("k.shape=",k.shape)
 
 # Validation MSE
-from sklearn.metrics import mean_squared_error, r2_score
+# https://scikit-learn.org/stable/modules/model_evaluation.html#regression-metrics
+from sklearn.metrics import mean_squared_error, r2_score, explained_variance_score, max_error, mean_absolute_error, mean_squared_log_error, median_absolute_error, mean_poisson_deviance, mean_gamma_deviance, mean_absolute_percentage_error
+
+test_mse = mean_squared_error(k, pred_k) 
+test_r2  = r2_score(k, pred_k)
+
 print("Mean squared error: %.2f" % mean_squared_error(k, pred_k))
-print("R2 score : %.2f" % r2_score(k, pred_k))
+print("R2 score: %.2f" % r2_score(k, pred_k))
+print("Explained variance score: %.2f" % explained_variance_score(k, pred_k))
+print("Max error: %.2f" % max_error(k, pred_k))
+print("Mean absolute error: %.2f" % mean_absolute_error(k, pred_k))
+#print("Mean squared log error: %.2f" % mean_squared_log_error(k, pred_k))
+print("Median absolute error: %.2f" % median_absolute_error(k, pred_k))
+#print("Mean poisson deviance: %.2f" % mean_poisson_deviance(k, pred_k))
+#print("Mean gamma deviance: %.2f" % mean_gamma_deviance(k, pred_k))
+print("Mean absolute percentage error: %.2f" % mean_absolute_percentage_error(k, pred_k))
 
 # Let's eyeball predicted vs actual data
 from matplotlib import pyplot
@@ -563,3 +575,24 @@ pyplot.show()
 best_ind = hof[0]
 for gene in best_ind:
     print(gene.kexpression)
+
+
+path = 'results_log.txt'
+
+if os.path.exists(path):
+    os.remove(path)
+file=open(path, "w")
+file.writelines("%s \n%s %s \n%s %s\n%s %s\n%s %s\n%s %s \n%s %s %s \n%s %s\n%s %s\n%s %s\n%s %s\n%s \n" % ('settings',
+      'head =',      h,
+      '#genes =',    n_genes,
+      'len of RNC =',r,
+      '# of pop =',  n_pop,
+      '# of gen =',  n_gen,
+      'best indices =', best_ind.a, best_ind.b,
+        'best model =',str(symplified_best),
+        'Target model =','...',
+        'Test_MSE = ', test_mse,
+        'Test_R2 = ',  test_r2,
+          log))
+
+file.close()    
